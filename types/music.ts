@@ -10,6 +10,10 @@ export type Song = {
   source_key?: string | null;
   track_number: number | null;
   year: number | null;
+  metadata_source?: string | null;
+  metadata_confidence?: "high" | "medium" | "low" | "unmatched" | null;
+  metadata_review?: string | null;
+  enriched_at?: string | null;
   created_at: string;
 };
 

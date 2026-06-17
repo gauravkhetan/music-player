@@ -7,8 +7,13 @@ CREATE TABLE IF NOT EXISTS songs (
   duration INTEGER,
   cover_url TEXT,
   audio_url TEXT NOT NULL,
+  source_key TEXT,
   track_number INTEGER,
   year INTEGER,
+  metadata_source TEXT,
+  metadata_confidence TEXT,
+  metadata_review TEXT,
+  enriched_at DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -57,4 +62,5 @@ CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist);
 CREATE INDEX IF NOT EXISTS idx_songs_album ON songs(album, artist);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_songs_audio_url ON songs(audio_url);
 CREATE INDEX IF NOT EXISTS idx_songs_created_at ON songs(created_at);
+CREATE INDEX IF NOT EXISTS idx_songs_metadata_confidence ON songs(metadata_confidence);
 CREATE INDEX IF NOT EXISTS idx_recently_played_user ON recently_played(user_email, played_at);

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import { slug, splitArtistNames } from "@/lib/artist-utils";
 
 export type SyncEnv = Record<string, string | undefined>;
 
@@ -27,15 +28,6 @@ export type SyncResult = {
   prefix: string;
   reset: boolean;
 };
-
-function slug(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
 
 function songIdFromKey(key: string) {
   return `r2-${createHash("sha1").update(key).digest("hex").slice(0, 24)}`;
@@ -156,8 +148,14 @@ async function listObjectKeys(env: SyncEnv, prefix = "") {
 }
 
 async function ensureSchema(env: SyncEnv) {
+  await queryD1(env, "ALTER TABLE songs ADD COLUMN source_key TEXT").catch(() => undefined);
+  await queryD1(env, "ALTER TABLE songs ADD COLUMN metadata_source TEXT").catch(() => undefined);
+  await queryD1(env, "ALTER TABLE songs ADD COLUMN metadata_confidence TEXT").catch(() => undefined);
+  await queryD1(env, "ALTER TABLE songs ADD COLUMN metadata_review TEXT").catch(() => undefined);
+  await queryD1(env, "ALTER TABLE songs ADD COLUMN enriched_at DATETIME").catch(() => undefined);
   await queryD1(env, "CREATE UNIQUE INDEX IF NOT EXISTS idx_songs_audio_url ON songs(audio_url)");
   await queryD1(env, "CREATE INDEX IF NOT EXISTS idx_songs_created_at ON songs(created_at)");
+  await queryD1(env, "CREATE INDEX IF NOT EXISTS idx_songs_metadata_confidence ON songs(metadata_confidence)");
 }
 
 async function resetImportedLibrary(env: SyncEnv) {
@@ -174,7 +172,11 @@ async function upsertSongs(env: SyncEnv, songs: SongMetadata[]) {
   const albums = new Map<string, [string, string, string, string | null, number | null]>();
 
   for (const song of songs) {
-    artists.set(slug(song.artist), [slug(song.artist), song.artist, song.coverUrl]);
+    for (const name of splitArtistNames(song.artist)) {
+      const id = slug(name);
+      const current = artists.get(id);
+      artists.set(id, [id, name, current?.[2] ?? song.coverUrl]);
+    }
     albums.set(slug(`${song.artist}-${song.album}`), [slug(`${song.artist}-${song.album}`), song.album, song.artist, song.coverUrl, song.year]);
   }
 
@@ -189,11 +191,11 @@ async function upsertSongs(env: SyncEnv, songs: SongMetadata[]) {
   }
 
   for (const group of chunk(songs, 10)) {
-    const placeholders = group.map(() => "(?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)").join(", ");
+    const placeholders = group.map(() => "(?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, NULL, NULL, NULL, NULL)").join(", ");
     await queryD1(
       env,
-      `INSERT OR REPLACE INTO songs (id, title, artist, album, genre, duration, cover_url, audio_url, track_number, year) VALUES ${placeholders}`,
-      group.flatMap((song) => [song.id, song.title, song.artist, song.album, song.coverUrl, song.audioUrl, song.trackNumber, song.year])
+      `INSERT OR REPLACE INTO songs (id, title, artist, album, genre, duration, cover_url, audio_url, source_key, track_number, year, metadata_source, metadata_confidence, metadata_review, enriched_at) VALUES ${placeholders}`,
+      group.flatMap((song) => [song.id, song.title, song.artist, song.album, song.coverUrl, song.audioUrl, song.sourceKey, song.trackNumber, song.year])
     );
   }
 }

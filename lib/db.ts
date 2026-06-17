@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { appEnv } from "@/lib/env";
 import { hasD1Config, queryD1 } from "@/lib/d1";
+import { slug, songHasArtist, splitArtistNames } from "@/lib/artist-utils";
 import type { Album, Artist, Playlist, Song, SortKey } from "@/types/music";
 
 type QueryOptions = {
@@ -76,20 +77,34 @@ export async function getSong(id: string) {
 export async function getArtists(): Promise<Artist[]> {
   if (hasD1Config()) {
     return queryD1<Artist>(
-      "SELECT artists.id, artists.name, artists.image_url, COUNT(songs.id) AS song_count FROM artists LEFT JOIN songs ON songs.artist = artists.name GROUP BY artists.id, artists.name, artists.image_url ORDER BY artists.name COLLATE NOCASE"
+      `SELECT artists.id,
+              artists.name,
+              artists.image_url,
+              COUNT(songs.id) AS song_count
+       FROM artists
+       LEFT JOIN songs
+         ON REPLACE(songs.artist, ', ', ',') = artists.name
+         OR REPLACE(songs.artist, ', ', ',') LIKE artists.name || ',%'
+         OR REPLACE(songs.artist, ', ', ',') LIKE '%,' || artists.name
+         OR REPLACE(songs.artist, ', ', ',') LIKE '%,' || artists.name || ',%'
+       GROUP BY artists.id, artists.name, artists.image_url
+       HAVING COUNT(songs.id) > 0
+       ORDER BY artists.name COLLATE NOCASE`
     );
   }
   const data = await sampleDataPromise;
   const byArtist = new Map<string, Artist>();
   for (const song of data.songs) {
-    const id = song.artist.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-    const current = byArtist.get(id);
-    byArtist.set(id, {
-      id,
-      name: song.artist,
-      image_url: current?.image_url ?? song.cover_url,
-      song_count: (current?.song_count ?? 0) + 1
-    });
+    for (const name of splitArtistNames(song.artist)) {
+      const id = slug(name);
+      const current = byArtist.get(id);
+      byArtist.set(id, {
+        id,
+        name,
+        image_url: current?.image_url ?? song.cover_url,
+        song_count: (current?.song_count ?? 0) + 1
+      });
+    }
   }
   return [...byArtist.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -107,10 +122,19 @@ export async function getArtistSongs(id: string) {
   const artist = await getArtist(id);
   if (!artist) return [];
   if (hasD1Config()) {
-    return queryD1<Song>("SELECT * FROM songs WHERE artist = ? ORDER BY album COLLATE NOCASE, track_number ASC, title COLLATE NOCASE", [artist.name]);
+    return queryD1<Song>(
+      `SELECT *
+       FROM songs
+       WHERE REPLACE(artist, ', ', ',') = ?
+          OR REPLACE(artist, ', ', ',') LIKE ? || ',%'
+          OR REPLACE(artist, ', ', ',') LIKE '%,' || ?
+          OR REPLACE(artist, ', ', ',') LIKE '%,' || ? || ',%'
+       ORDER BY album COLLATE NOCASE, track_number ASC, title COLLATE NOCASE`,
+      [artist.name, artist.name, artist.name, artist.name]
+    );
   }
   const data = await sampleDataPromise;
-  return data.songs.filter((song) => song.artist === artist.name);
+  return data.songs.filter((song) => songHasArtist(song.artist, artist.name));
 }
 
 export async function getAlbums(): Promise<Album[]> {
