@@ -140,18 +140,28 @@ export async function getArtistSongs(id: string) {
 export async function getAlbums(): Promise<Album[]> {
   if (hasD1Config()) {
     return queryD1<Album>(
-      "SELECT albums.id, albums.title, albums.artist, albums.cover_url, albums.year, COUNT(songs.id) AS song_count FROM albums LEFT JOIN songs ON songs.album = albums.title AND songs.artist = albums.artist GROUP BY albums.id, albums.title, albums.artist, albums.cover_url, albums.year ORDER BY albums.title COLLATE NOCASE"
+      `SELECT albums.id,
+              albums.title,
+              albums.artist,
+              albums.cover_url,
+              albums.year,
+              COUNT(songs.id) AS song_count
+       FROM albums
+       LEFT JOIN songs ON songs.album = albums.title
+       GROUP BY albums.id, albums.title, albums.artist, albums.cover_url, albums.year
+       HAVING COUNT(songs.id) > 0
+       ORDER BY albums.title COLLATE NOCASE`
     );
   }
   const data = await sampleDataPromise;
   const byAlbum = new Map<string, Album>();
   for (const song of data.songs) {
-    const id = `${song.artist}-${song.album}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    const id = slug(song.album);
     const current = byAlbum.get(id);
     byAlbum.set(id, {
       id,
       title: song.album,
-      artist: song.artist,
+      artist: current?.artist ?? song.artist,
       cover_url: current?.cover_url ?? song.cover_url,
       year: current?.year ?? song.year,
       song_count: (current?.song_count ?? 0) + 1
@@ -173,12 +183,12 @@ export async function getAlbumSongs(id: string) {
   const album = await getAlbum(id);
   if (!album) return [];
   if (hasD1Config()) {
-    return queryD1<Song>("SELECT * FROM songs WHERE album = ? AND artist = ? ORDER BY track_number ASC", [album.title, album.artist]);
+    return queryD1<Song>("SELECT * FROM songs WHERE album = ? ORDER BY track_number ASC, title COLLATE NOCASE", [album.title]);
   }
   const data = await sampleDataPromise;
   return data.songs
-    .filter((song) => song.album === album.title && song.artist === album.artist)
-    .sort((a, b) => (a.track_number ?? 0) - (b.track_number ?? 0));
+    .filter((song) => song.album === album.title)
+    .sort((a, b) => (a.track_number ?? 0) - (b.track_number ?? 0) || a.title.localeCompare(b.title));
 }
 
 export async function getFavorites(userEmail: string) {

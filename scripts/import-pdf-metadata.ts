@@ -341,11 +341,11 @@ async function rebuildArtistAlbumTables(env: Record<string, string | undefined>)
 
   const albums = await queryD1<{ title: string; artist: string; cover_url: string | null; year: number | null }>(
     env,
-    "SELECT album AS title, artist, MAX(cover_url) AS cover_url, MAX(year) AS year FROM songs WHERE album IS NOT NULL AND album != '' GROUP BY artist, album"
+    "SELECT album AS title, MIN(artist) AS artist, MAX(cover_url) AS cover_url, MAX(year) AS year FROM songs WHERE album IS NOT NULL AND album != '' GROUP BY album"
   );
   for (const group of chunk(albums, 20)) {
     const placeholders = group.map(() => "(?, ?, ?, ?, ?)").join(", ");
-    await queryD1(env, `INSERT OR REPLACE INTO albums (id, title, artist, cover_url, year) VALUES ${placeholders}`, group.flatMap((album) => [slug(`${album.artist}-${album.title}`), album.title, album.artist, album.cover_url, album.year]));
+    await queryD1(env, `INSERT OR REPLACE INTO albums (id, title, artist, cover_url, year) VALUES ${placeholders}`, group.flatMap((album) => [slug(album.title), album.title, album.artist, album.cover_url, album.year]));
   }
 }
 

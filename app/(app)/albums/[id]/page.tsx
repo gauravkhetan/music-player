@@ -15,7 +15,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
         <div className="min-w-0">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">Album</p>
           <h1 className="text-4xl font-black leading-tight sm:text-6xl">{album.title}</h1>
-          <p className="mt-2 text-muted">{album.artist} · {album.year ?? "Unknown year"} · {songs.length} songs</p>
+          <p className="mt-2 text-muted">{album.year ?? "Unknown year"} · {songs.length} songs</p>
           <div className="mt-5">
             <PlayButton songs={songs} label="Play album" />
           </div>

@@ -16,6 +16,7 @@
     "metadata:stats": "tsx scripts/metadata-stats.ts",
     "metadata:import-pdf": "tsx scripts/import-pdf-metadata.ts",
     "artists:rebuild": "tsx scripts/rebuild-artists.ts",
+    "albums:rebuild": "tsx scripts/rebuild-albums.ts",
     "import:r2": "tsx scripts/import-r2-library.ts",
     "import:r2:reset": "tsx scripts/import-r2-library.ts --reset",
     "seed:json": "tsx scripts/seed-from-json.ts"

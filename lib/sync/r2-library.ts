@@ -177,7 +177,15 @@ async function upsertSongs(env: SyncEnv, songs: SongMetadata[]) {
       const current = artists.get(id);
       artists.set(id, [id, name, current?.[2] ?? song.coverUrl]);
     }
-    albums.set(slug(`${song.artist}-${song.album}`), [slug(`${song.artist}-${song.album}`), song.album, song.artist, song.coverUrl, song.year]);
+    const albumId = slug(song.album);
+    const currentAlbum = albums.get(albumId);
+    albums.set(albumId, [
+      albumId,
+      song.album,
+      currentAlbum?.[2] ?? song.artist,
+      currentAlbum?.[3] ?? song.coverUrl,
+      currentAlbum?.[4] ?? song.year
+    ]);
   }
 
   for (const group of chunk([...artists.values()], 25)) {

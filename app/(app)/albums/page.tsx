@@ -7,7 +7,7 @@ export default async function AlbumsPage() {
   return (
     <div className="space-y-5">
       <PageHeader eyebrow="Albums" title="Albums" description={`${albums.length.toLocaleString()} albums available.`} />
-      <CardGrid items={albums.map((album) => ({ id: album.id, href: `/albums/${album.id}`, title: album.title, subtitle: `${album.artist} · ${album.song_count ?? 0} songs`, image_url: album.cover_url }))} />
+      <CardGrid items={albums.map((album) => ({ id: album.id, href: `/albums/${album.id}`, title: album.title, subtitle: `${album.song_count ?? 0} songs`, image_url: album.cover_url }))} />
     </div>
   );
 }
