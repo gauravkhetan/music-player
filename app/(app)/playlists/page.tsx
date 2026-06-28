@@ -13,7 +13,7 @@ export default async function PlaylistsPage() {
         title="Playlists"
         description="Create, rename, delete, and fill playlists from your library."
       />
-      <p className="mb-3 text-xl font-black sm:hidden">
+      <p className="mb-4 pt-1 text-xl font-black sm:hidden">
         Playlists · {playlists.length.toLocaleString()} playlists
       </p>
       <PlaylistManager initialPlaylists={playlists} />

@@ -17,7 +17,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           <p className="mt-2 text-muted">{album.year ?? "Unknown year"} · {songs.length} songs</p>
         </div>
       </header>
-      <p className="mb-3 text-xl font-black sm:hidden">
+      <p className="mb-4 pt-1 text-xl font-black sm:hidden">
         {album.title} · {songs.length.toLocaleString()} songs
       </p>
       <SongList songs={songs} />
