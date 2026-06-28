@@ -22,6 +22,9 @@ export default async function PlaylistPage({ params }: { params: Promise<{ id: s
         title={playlist.name}
         description={`${songs.length.toLocaleString()} songs`}
       />
+      <p className="mb-3 text-sm text-muted sm:hidden">
+        {playlist.name} · {songs.length.toLocaleString()} songs
+      </p>
       {songs.length ? (
         <SongList songs={songs} hidePlaylistAction />
       ) : (
