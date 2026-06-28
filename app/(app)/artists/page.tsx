@@ -13,7 +13,7 @@ export default async function ArtistsPage() {
   return (
     <div className="space-y-0 sm:space-y-5">
       <PageHeader eyebrow="Artists" title="Artists" description="Browse artists from your personal collection." />
-      <p className="mb-3 text-sm text-muted sm:hidden">
+      <p className="mb-3 text-xl font-black sm:hidden">
         Artists · {artistCount.toLocaleString()} artists
       </p>
       <PaginatedCardGrid

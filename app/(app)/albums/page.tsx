@@ -13,7 +13,7 @@ export default async function AlbumsPage() {
   return (
     <div className="space-y-0 sm:space-y-5">
       <PageHeader eyebrow="Albums" title="Albums" description="Browse albums from your personal collection." />
-      <p className="mb-3 text-sm text-muted sm:hidden">
+      <p className="mb-3 text-xl font-black sm:hidden">
         Albums · {albumCount.toLocaleString()} albums
       </p>
       <PaginatedCardGrid

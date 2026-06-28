@@ -10,6 +10,9 @@ export default async function ArtistPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-0 sm:space-y-5">
       <PageHeader eyebrow="Artist" title={artist.name} description={`${songs.length.toLocaleString()} songs`} />
+      <p className="mb-3 text-xl font-black sm:hidden">
+        {artist.name} · {songs.length.toLocaleString()} songs
+      </p>
       <SongList songs={songs} />
     </div>
   );
