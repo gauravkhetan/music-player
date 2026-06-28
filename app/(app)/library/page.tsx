@@ -11,9 +11,9 @@ export default async function LibraryPage() {
   ]);
   const initialSongs = songs.slice(0, PAGE_SIZE);
   return (
-    <div className="space-y-0 sm:space-y-5">
+    <div className="sm:space-y-5">
       <PageHeader eyebrow="Library" title="All songs" description="Search, sort, and stream your personal collection." />
-      <p className="mb-4 pt-1 text-xl font-black sm:hidden">
+      <p className="mb-3 text-xl font-black sm:hidden">
         Library · {songCount.toLocaleString()} songs
       </p>
       <SearchableLibrary initialSongs={initialSongs} initialHasMore={songs.length > PAGE_SIZE} pageSize={PAGE_SIZE} />

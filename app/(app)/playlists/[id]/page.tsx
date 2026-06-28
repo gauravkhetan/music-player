@@ -16,13 +16,13 @@ export default async function PlaylistPage({ params }: { params: Promise<{ id: s
   if (!playlist) notFound();
 
   return (
-    <div className="space-y-0 sm:space-y-5">
+    <div className="sm:space-y-5">
       <PageHeader
         eyebrow="Playlist"
         title={playlist.name}
         description={`${songs.length.toLocaleString()} songs`}
       />
-      <p className="mb-4 pt-1 text-xl font-black sm:hidden">
+      <p className="mb-3 text-xl font-black sm:hidden">
         {playlist.name} · {songs.length.toLocaleString()} songs
       </p>
       {songs.length ? (
