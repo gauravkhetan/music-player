@@ -23,6 +23,8 @@ export function SongList({ songs, compact, showCompactArtworkOnDesktop, hidePlay
   const [playlistSong, setPlaylistSong] = useState<Song | null>(null);
   const [playlistStatus, setPlaylistStatus] = useState<string | null>(null);
   const [addingPlaylistId, setAddingPlaylistId] = useState<string | null>(null);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
   const [visibleSongs, setVisibleSongs] = useState(songs);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const requestedDurationIds = useRef<Set<string>>(new Set());
@@ -145,6 +147,51 @@ export function SongList({ songs, compact, showCompactArtworkOnDesktop, hidePlay
       return;
     }
 
+    setPlaylists((current) => current.map((item) => item.id === playlist.id ? { ...item, song_count: (item.song_count ?? 0) + 1 } : item));
+    setPlaylistStatus(`Added to ${playlist.name}`);
+    window.setTimeout(() => {
+      setPlaylistSong(null);
+      setPlaylistStatus(null);
+    }, 800);
+  }
+
+  async function createPlaylistAndAddSong() {
+    if (!playlistSong) return;
+    const name = newPlaylistName.trim();
+    if (!name) return;
+
+    setIsCreatingPlaylist(true);
+    setPlaylistStatus(null);
+
+    const createResponse = await fetch("/api/playlists", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name })
+    });
+
+    if (!createResponse.ok) {
+      setIsCreatingPlaylist(false);
+      setPlaylistStatus("Could not create playlist");
+      return;
+    }
+
+    const playlist = (await createResponse.json()) as Playlist;
+    setPlaylists((current) => [{ ...playlist, song_count: 0 }, ...current]);
+    setNewPlaylistName("");
+
+    const addResponse = await fetch(`/api/playlists/${playlist.id}/songs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ song_id: playlistSong.id })
+    });
+
+    setIsCreatingPlaylist(false);
+    if (!addResponse.ok) {
+      setPlaylistStatus("Playlist created, but song was not added");
+      return;
+    }
+
+    setPlaylists((current) => current.map((item) => item.id === playlist.id ? { ...item, song_count: (item.song_count ?? 0) + 1 } : item));
     setPlaylistStatus(`Added to ${playlist.name}`);
     window.setTimeout(() => {
       setPlaylistSong(null);
@@ -195,10 +242,11 @@ export function SongList({ songs, compact, showCompactArtworkOnDesktop, hidePlay
                 size="icon"
                 variant="ghost"
                 onClick={(event) => {
-                  event.stopPropagation();
-                  setPlaylistSong(song);
-                  setPlaylistStatus(null);
-                }}
+                event.stopPropagation();
+                setPlaylistSong(song);
+                setPlaylistStatus(null);
+                setNewPlaylistName("");
+              }}
                 onKeyDown={(event) => event.stopPropagation()}
                 aria-label={`Add ${song.title} to playlist`}
                 title="Add to playlist"
@@ -220,6 +268,21 @@ export function SongList({ songs, compact, showCompactArtworkOnDesktop, hidePlay
               </div>
               <Button size="icon" variant="ghost" onClick={() => setPlaylistSong(null)} aria-label="Close playlist picker" title="Close">
                 <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+              <input
+                className="h-11 min-w-0 rounded-md border border-border bg-background px-3 text-sm text-white outline-none placeholder:text-muted focus:border-accent"
+                placeholder="New playlist"
+                value={newPlaylistName}
+                onChange={(event) => setNewPlaylistName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void createPlaylistAndAddSong();
+                }}
+              />
+              <Button variant="primary" size="sm" disabled={!newPlaylistName.trim() || isCreatingPlaylist} onClick={() => void createPlaylistAndAddSong()}>
+                Create
               </Button>
             </div>
 

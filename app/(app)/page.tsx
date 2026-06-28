@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import Link from "next/link";
 import { CardGrid } from "@/components/card-grid";
 import { PageHeader } from "@/components/page-header";
 import { SongList } from "@/components/song-list";
@@ -41,10 +42,10 @@ export default async function HomePage() {
         <h2 className="text-xl font-black">Quick access playlists</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {playlists.map((playlist) => (
-            <div key={playlist.id} className="rounded-md bg-surface p-4">
+            <Link key={playlist.id} href={`/playlists/${playlist.id}`} className="rounded-md bg-surface p-4 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
               <p className="font-bold">{playlist.name}</p>
               <p className="mt-1 text-sm text-muted">{playlist.song_count ?? 0} songs</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
