@@ -49,16 +49,16 @@ export function PlaylistManager({ initialPlaylists }: { initialPlaylists: Playli
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-[1fr_auto] gap-3">
         <input
-          className="h-12 rounded-md border border-border bg-surface px-4 text-base text-white outline-none placeholder:text-muted focus:border-accent"
+          className="h-12 min-w-0 rounded-md border border-border bg-surface px-4 text-base text-white outline-none placeholder:text-muted focus:border-accent"
           placeholder="New playlist name"
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
-        <Button variant="primary" onClick={createPlaylist}>
+        <Button variant="primary" className="h-12 px-3 sm:px-4" onClick={createPlaylist}>
           <ListPlus className="h-4 w-4" />
-          Create
+          <span className="hidden sm:inline">Create</span>
         </Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

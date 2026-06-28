@@ -1,15 +1,21 @@
 import { PageHeader } from "@/components/page-header";
 import { PaginatedCardGrid } from "@/components/paginated-card-grid";
-import { getAlbums } from "@/lib/db";
+import { getAlbumCount, getAlbums } from "@/lib/db";
 
 const PAGE_SIZE = 20;
 
 export default async function AlbumsPage() {
-  const albums = await getAlbums({ limit: PAGE_SIZE + 1 });
+  const [albums, albumCount] = await Promise.all([
+    getAlbums({ limit: PAGE_SIZE + 1 }),
+    getAlbumCount()
+  ]);
   const initialAlbums = albums.slice(0, PAGE_SIZE);
   return (
     <div className="space-y-0 sm:space-y-5">
       <PageHeader eyebrow="Albums" title="Albums" description="Browse albums from your personal collection." />
+      <p className="mb-3 text-sm text-muted sm:hidden">
+        Albums · {albumCount.toLocaleString()} albums
+      </p>
       <PaginatedCardGrid
         initialItems={initialAlbums.map((album) => ({ id: album.id, href: `/albums/${album.id}`, title: album.title, subtitle: `${album.song_count ?? 0} songs`, image_url: album.cover_url }))}
         initialHasMore={albums.length > PAGE_SIZE}

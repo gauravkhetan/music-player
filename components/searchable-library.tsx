@@ -87,17 +87,17 @@ export function SearchableLibrary({ initialSongs, initialHasMore, pageSize = 20 
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_220px]">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
           <input
-            className="h-12 w-full rounded-md border border-border bg-surface pl-11 pr-4 text-base text-white outline-none transition placeholder:text-muted focus:border-accent"
-            placeholder="Search title, artist, album"
+            className="h-12 w-full min-w-0 rounded-md border border-border bg-surface pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-muted focus:border-accent sm:pl-11 sm:pr-4 sm:text-base"
+            placeholder="Search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <select className="h-12 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-accent" value={sort} onChange={(event) => setSort(event.target.value as SortKey)}>
+        <select className="h-12 min-w-0 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-accent" value={sort} onChange={(event) => setSort(event.target.value as SortKey)}>
           <option value="title">Title</option>
           <option value="artist">Artist</option>
           <option value="album">Album</option>

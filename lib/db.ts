@@ -54,6 +54,31 @@ function paginate<T>(items: T[], limit = 50, offset = 0) {
   return items.slice(offset, offset + limit);
 }
 
+export async function getSongCount() {
+  if (hasD1Config()) {
+    const rows = await queryD1<{ count: number }>("SELECT COUNT(*) AS count FROM songs");
+    return rows[0]?.count ?? 0;
+  }
+  const data = await sampleDataPromise;
+  return data.songs.length;
+}
+
+export async function getArtistCount() {
+  if (hasD1Config()) {
+    const rows = await queryD1<{ count: number }>("SELECT COUNT(*) AS count FROM artists");
+    return rows[0]?.count ?? 0;
+  }
+  return (await getArtists()).length;
+}
+
+export async function getAlbumCount() {
+  if (hasD1Config()) {
+    const rows = await queryD1<{ count: number }>("SELECT COUNT(*) AS count FROM albums");
+    return rows[0]?.count ?? 0;
+  }
+  return (await getAlbums()).length;
+}
+
 export async function getSongs(options: QueryOptions = {}) {
   if (hasD1Config()) {
     const sortColumn = options.sort === "created_at" ? "created_at" : options.sort ?? "title";
