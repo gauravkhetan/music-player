@@ -103,7 +103,7 @@ export function MusicPlayer() {
             setPlaying(false);
             setAudioError("Audio stream failed");
           }}
-          onEnded={next}
+          onEnded={() => next()}
         />
         <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3 lg:min-h-[88px] lg:grid-cols-[minmax(220px,1fr)_minmax(360px,1.3fr)_minmax(180px,1fr)]">
           <div className="flex min-w-0 items-center gap-3">
@@ -124,7 +124,7 @@ export function MusicPlayer() {
               <Button size="icon" variant="primary" onClick={() => setPlaying(!isPlaying)} aria-label={isPlaying ? "Pause" : "Play"} title={isPlaying ? "Pause" : "Play"}>
                 {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
               </Button>
-              <Button size="icon" variant="ghost" onClick={next} aria-label="Next" title="Next">
+              <Button size="icon" variant="ghost" onClick={() => next(true)} aria-label="Next" title="Next">
                 <SkipForward className="h-5 w-5" />
               </Button>
               <Button size="icon" variant="ghost" onClick={cycleRepeat} aria-label="Repeat" title="Repeat">
@@ -200,7 +200,7 @@ export function MusicPlayer() {
                   <Button className="h-14 w-14 rounded-full" size="icon" variant="primary" onClick={() => setPlaying(!isPlaying)} aria-label={isPlaying ? "Pause" : "Play"} title={isPlaying ? "Pause" : "Play"}>
                     {isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current" />}
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={next} aria-label="Next" title="Next">
+                  <Button size="icon" variant="ghost" onClick={() => next(true)} aria-label="Next" title="Next">
                     <SkipForward className="h-6 w-6" />
                   </Button>
                   <Button size="icon" variant="ghost" onClick={cycleRepeat} aria-label="Repeat" title="Repeat">

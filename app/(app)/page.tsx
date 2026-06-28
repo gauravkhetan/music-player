@@ -28,7 +28,7 @@ export default async function HomePage() {
   const recentSongs = uniqueSongs(recentlyPlayed);
 
   return (
-    <div className="space-y-0 sm:space-y-8">
+    <div className="space-y-7 sm:space-y-8">
       <PageHeader
         eyebrow="Private library"
         title="Listen now"

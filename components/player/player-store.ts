@@ -17,7 +17,7 @@ type PlayerState = {
   setVolume: (volume: number) => void;
   playQueue: (songs: Song[], startIndex?: number) => void;
   addToQueue: (song: Song) => void;
-  next: () => void;
+  next: (manual?: boolean) => void;
   previous: () => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
@@ -47,7 +47,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       isPlaying: currentSong ? get().isPlaying : true
     });
   },
-  next: () => {
+  next: (manual = false) => {
     const { queue, currentIndex, shuffle, repeat } = get();
     if (!queue.length) return;
     if (repeat === "one") {
@@ -56,7 +56,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
     const nextIndex = shuffle ? Math.floor(Math.random() * queue.length) : currentIndex + 1;
     if (nextIndex >= queue.length) {
-      if (repeat === "all") set({ currentIndex: 0, currentSong: queue[0], isPlaying: true });
+      if (repeat === "all" || manual) set({ currentIndex: 0, currentSong: queue[0], isPlaying: true });
       else set({ isPlaying: false });
       return;
     }
