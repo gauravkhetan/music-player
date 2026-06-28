@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ListPlus, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/ui/cover-art";
 import { usePlayerStore } from "@/components/player/player-store";
@@ -66,18 +66,11 @@ export function MusicPlayer() {
   }, [volume]);
 
   if (!currentSong) {
-    return (
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-[#121212]/95 px-4 py-3 shadow-player backdrop-blur safe-bottom lg:left-60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 text-sm text-muted">
-          <span>Select a song to start listening</span>
-          <ListPlus className="h-5 w-5" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-[#121212]/95 px-3 py-3 shadow-player backdrop-blur safe-bottom lg:left-60">
+    <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 border-t border-border bg-[#121212]/95 px-3 py-3 shadow-player backdrop-blur lg:bottom-0 lg:left-60 lg:px-6 lg:py-5">
       <audio
         ref={audioRef}
         preload="metadata"
@@ -89,9 +82,9 @@ export function MusicPlayer() {
         }}
         onEnded={next}
       />
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(360px,1.3fr)_minmax(180px,1fr)]">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3 lg:min-h-[88px] lg:grid-cols-[minmax(220px,1fr)_minmax(360px,1.3fr)_minmax(180px,1fr)]">
         <div className="flex min-w-0 items-center gap-3">
-          <CoverArt src={currentSong.cover_url} alt={currentSong.album} className="h-12 w-12" />
+          <CoverArt src={currentSong.cover_url} alt={currentSong.album} className="h-12 w-12 lg:h-16 lg:w-16" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-white">{currentSong.title}</p>
             <p className="truncate text-xs text-muted">{audioError ?? currentSong.artist}</p>

@@ -13,6 +13,11 @@ type QueryOptions = {
   offset?: number;
 };
 
+type PageOptions = {
+  limit?: number;
+  offset?: number;
+};
+
 type LibraryData = {
   songs: Song[];
   playlists: Playlist[];
@@ -74,8 +79,43 @@ export async function getSong(id: string) {
   return data.songs.find((song) => song.id === id) ?? null;
 }
 
-export async function getArtists(): Promise<Artist[]> {
+export async function updateSongDuration(id: string, duration: number) {
   if (hasD1Config()) {
+    await queryD1("UPDATE songs SET duration = ? WHERE id = ?", [duration, id]);
+    return;
+  }
+  const data = await sampleDataPromise;
+  const song = data.songs.find((item) => item.id === id);
+  if (song) song.duration = duration;
+}
+
+export async function getArtists(options: PageOptions = {}): Promise<Artist[]> {
+  if (hasD1Config()) {
+    if (options.limit) {
+      return queryD1<Artist>(
+        `WITH page AS (
+           SELECT id, name, image_url
+           FROM artists
+           ORDER BY name COLLATE NOCASE
+           LIMIT ? OFFSET ?
+         )
+         SELECT page.id,
+                page.name,
+                page.image_url,
+                (
+                  SELECT COUNT(*)
+                  FROM songs
+                  WHERE REPLACE(songs.artist, ', ', ',') = page.name
+                     OR REPLACE(songs.artist, ', ', ',') LIKE page.name || ',%'
+                     OR REPLACE(songs.artist, ', ', ',') LIKE '%,' || page.name
+                     OR REPLACE(songs.artist, ', ', ',') LIKE '%,' || page.name || ',%'
+                ) AS song_count
+         FROM page
+         ORDER BY page.name COLLATE NOCASE`,
+        [options.limit, options.offset ?? 0]
+      );
+    }
+
     return queryD1<Artist>(
       `SELECT artists.id,
               artists.name,
@@ -106,7 +146,8 @@ export async function getArtists(): Promise<Artist[]> {
       });
     }
   }
-  return [...byArtist.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const artists = [...byArtist.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return options.limit ? paginate(artists, options.limit, options.offset) : artists;
 }
 
 export async function getArtist(id: string) {
@@ -137,8 +178,32 @@ export async function getArtistSongs(id: string) {
   return data.songs.filter((song) => songHasArtist(song.artist, artist.name));
 }
 
-export async function getAlbums(): Promise<Album[]> {
+export async function getAlbums(options: PageOptions = {}): Promise<Album[]> {
   if (hasD1Config()) {
+    if (options.limit) {
+      return queryD1<Album>(
+        `WITH page AS (
+           SELECT id, title, artist, cover_url, year
+           FROM albums
+           ORDER BY title COLLATE NOCASE
+           LIMIT ? OFFSET ?
+         )
+         SELECT page.id,
+                page.title,
+                page.artist,
+                page.cover_url,
+                page.year,
+                (
+                  SELECT COUNT(*)
+                  FROM songs
+                  WHERE songs.album = page.title
+                ) AS song_count
+         FROM page
+         ORDER BY page.title COLLATE NOCASE`,
+        [options.limit, options.offset ?? 0]
+      );
+    }
+
     return queryD1<Album>(
       `SELECT albums.id,
               albums.title,
@@ -167,7 +232,8 @@ export async function getAlbums(): Promise<Album[]> {
       song_count: (current?.song_count ?? 0) + 1
     });
   }
-  return [...byAlbum.values()].sort((a, b) => a.title.localeCompare(b.title));
+  const albums = [...byAlbum.values()].sort((a, b) => a.title.localeCompare(b.title));
+  return options.limit ? paginate(albums, options.limit, options.offset) : albums;
 }
 
 export async function getAlbum(id: string) {
@@ -261,6 +327,53 @@ export async function getPlaylists(userEmail: string) {
       ...playlist,
       song_count: data.playlist_songs.filter((item) => item.playlist_id === playlist.id).length
     }));
+}
+
+export async function getPlaylist(id: string, userEmail: string) {
+  if (hasD1Config()) {
+    const rows = await queryD1<Playlist>(
+      `SELECT playlists.*, COUNT(playlist_songs.song_id) AS song_count
+       FROM playlists
+       LEFT JOIN playlist_songs ON playlist_songs.playlist_id = playlists.id
+       WHERE playlists.id = ? AND playlists.created_by = ?
+       GROUP BY playlists.id, playlists.name, playlists.created_by, playlists.created_at
+       LIMIT 1`,
+      [id, userEmail]
+    );
+    return rows[0] ?? null;
+  }
+
+  const data = await sampleDataPromise;
+  const playlist = data.playlists.find((item) => item.id === id && item.created_by === userEmail);
+  if (!playlist) return null;
+  return {
+    ...playlist,
+    song_count: data.playlist_songs.filter((item) => item.playlist_id === playlist.id).length
+  };
+}
+
+export async function getPlaylistSongs(id: string, userEmail: string) {
+  const playlist = await getPlaylist(id, userEmail);
+  if (!playlist) return [];
+
+  if (hasD1Config()) {
+    return queryD1<Song>(
+      `SELECT songs.*
+       FROM playlist_songs
+       JOIN songs ON songs.id = playlist_songs.song_id
+       WHERE playlist_songs.playlist_id = ?
+       ORDER BY playlist_songs.position ASC, songs.title COLLATE NOCASE`,
+      [id]
+    );
+  }
+
+  const data = await sampleDataPromise;
+  const songsById = new Map(data.songs.map((song) => [song.id, song]));
+  return data.playlist_songs
+    .filter((item) => item.playlist_id === id)
+    .sort((a, b) => a.position - b.position)
+    .map((item) => songsById.get(item.song_id))
+    .filter((song): song is Song => Boolean(song));
 }
 
 export async function getRecentlyAddedSongs() {

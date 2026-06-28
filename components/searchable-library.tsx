@@ -1,22 +1,45 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import Fuse from "fuse.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { SongList } from "@/components/song-list";
 import type { Song, SortKey } from "@/types/music";
 
 type SearchableLibraryProps = {
-  songs: Song[];
+  initialSongs: Song[];
+  initialHasMore: boolean;
+  pageSize?: number;
 };
 
-export function SearchableLibrary({ songs }: SearchableLibraryProps) {
+type SongsResponse = {
+  songs: Song[];
+  has_more?: boolean;
+};
+
+export function SearchableLibrary({ initialSongs, initialHasMore, pageSize = 20 }: SearchableLibraryProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("title");
-  const [visibleCount, setVisibleCount] = useState(100);
+  const [songs, setSongs] = useState(initialSongs);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isLoading, setIsLoading] = useState(false);
+  const hasMountedRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const fuse = useMemo(() => new Fuse(songs, { keys: ["title", "artist", "album"], threshold: 0.35, ignoreLocation: true }), [songs]);
+  const queryKey = useMemo(() => `${debouncedQuery.trim()}::${sort}`, [debouncedQuery, sort]);
+
+  const fetchSongs = useCallback(async (offset: number, signal?: AbortSignal) => {
+    const params = new URLSearchParams({
+      limit: String(pageSize),
+      offset: String(offset),
+      sort
+    });
+    const trimmedQuery = debouncedQuery.trim();
+    if (trimmedQuery) params.set("q", trimmedQuery);
+
+    const response = await fetch(`/api/songs?${params.toString()}`, { cache: "no-store", signal });
+    if (!response.ok) throw new Error("Could not load songs");
+    return (await response.json()) as SongsResponse;
+  }, [debouncedQuery, pageSize, sort]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 300);
@@ -24,28 +47,43 @@ export function SearchableLibrary({ songs }: SearchableLibraryProps) {
   }, [query]);
 
   useEffect(() => {
-    setVisibleCount(100);
-  }, [debouncedQuery, sort]);
-
-  const results = useMemo(() => {
-    const source = debouncedQuery.trim() ? fuse.search(debouncedQuery.trim()).map((item) => item.item) : songs;
-    return [...source].sort((a, b) => {
-      if (sort === "created_at") return b.created_at.localeCompare(a.created_at);
-      return String(a[sort] ?? "").localeCompare(String(b[sort] ?? ""));
-    });
-  }, [debouncedQuery, fuse, songs, sort]);
-
-  const visibleSongs = results.slice(0, visibleCount);
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    const controller = new AbortController();
+    setIsLoading(true);
+    void fetchSongs(0, controller.signal)
+      .then((payload) => {
+        setSongs(payload.songs);
+        setHasMore(Boolean(payload.has_more));
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") console.error(error);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [fetchSongs, queryKey]);
 
   useEffect(() => {
     const element = loadMoreRef.current;
-    if (!element || visibleCount >= results.length) return;
+    if (!element || !hasMore || isLoading) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) setVisibleCount((count) => Math.min(count + 100, results.length));
+      if (!entries[0]?.isIntersecting) return;
+      setIsLoading(true);
+      void fetchSongs(songs.length)
+        .then((payload) => {
+          setSongs((current) => [...current, ...payload.songs]);
+          setHasMore(Boolean(payload.has_more));
+        })
+        .catch((error) => console.error(error))
+        .finally(() => setIsLoading(false));
     }, { rootMargin: "600px" });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [results.length, visibleCount]);
+  }, [fetchSongs, hasMore, isLoading, queryKey, songs.length]);
 
   return (
     <div className="space-y-4">
@@ -66,8 +104,10 @@ export function SearchableLibrary({ songs }: SearchableLibraryProps) {
           <option value="created_at">Recently added</option>
         </select>
       </div>
-      <SongList songs={visibleSongs} />
-      <div ref={loadMoreRef} className="h-2" aria-hidden />
+      <SongList songs={songs} />
+      <div ref={loadMoreRef} className="flex min-h-10 items-center justify-center text-sm text-muted" aria-live="polite">
+        {isLoading ? "Loading..." : hasMore ? null : songs.length ? "End of list" : "No songs found"}
+      </div>
     </div>
   );
 }

@@ -44,7 +44,7 @@ export function Navigation() {
           })}
         </nav>
       </aside>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-border bg-[#121212]/95 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-2 backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 grid min-h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-6 border-t border-border bg-[#121212]/95 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur lg:hidden">
         {items.map((item) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (

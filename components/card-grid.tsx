@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CoverArt } from "@/components/ui/cover-art";
 
-type GridItem = {
+export type GridItem = {
   id: string;
   href: string;
   title: string;

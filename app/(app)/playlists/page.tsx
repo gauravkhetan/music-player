@@ -7,7 +7,7 @@ export default async function PlaylistsPage() {
   const session = await auth();
   const playlists = await getPlaylists(session?.user?.email ?? "");
   return (
-    <div className="space-y-5">
+    <div className="space-y-0 sm:space-y-5">
       <PageHeader
         eyebrow="Playlists"
         title="Playlists"

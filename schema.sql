@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS recently_played (
 CREATE INDEX IF NOT EXISTS idx_songs_search ON songs(title, artist, album);
 CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist);
 CREATE INDEX IF NOT EXISTS idx_songs_album ON songs(album, artist);
+CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
+CREATE INDEX IF NOT EXISTS idx_albums_title ON albums(title);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_songs_audio_url ON songs(audio_url);
 CREATE INDEX IF NOT EXISTS idx_songs_created_at ON songs(created_at);
 CREATE INDEX IF NOT EXISTS idx_songs_metadata_confidence ON songs(metadata_confidence);

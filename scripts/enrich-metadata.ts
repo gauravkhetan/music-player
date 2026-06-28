@@ -202,7 +202,7 @@ async function enrichSong(env: Record<string, string | undefined>, song: SongRow
   const key = objectKeyFromSong(song, env);
   const cleanedTitle = titleCase(cleanSongTitleFromName(fileNameFromKey(key)) || song.title);
   const tagBuffer = await getR2ObjectRangeBuffer(env, key);
-  const parsed = await parseBuffer(tagBuffer, undefined, { duration: false }).catch(() => null);
+  const parsed = await parseBuffer(tagBuffer, undefined, { duration: true }).catch(() => null);
   const common = parsed?.common;
   const format = parsed?.format;
   const tagTitle = common?.title?.trim();

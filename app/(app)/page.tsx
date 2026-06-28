@@ -1,9 +1,18 @@
 import { auth } from "@/auth";
 import { CardGrid } from "@/components/card-grid";
 import { PageHeader } from "@/components/page-header";
-import { PlayButton } from "@/components/player/play-button";
 import { SongList } from "@/components/song-list";
 import { getAlbums, getFavorites, getPlaylists, getRecentlyAddedSongs, getRecentlyPlayed } from "@/lib/db";
+import type { Song } from "@/types/music";
+
+function uniqueSongs(songs: Song[]) {
+  const seen = new Set<string>();
+  return songs.filter((song) => {
+    if (seen.has(song.id)) return false;
+    seen.add(song.id);
+    return true;
+  });
+}
 
 export default async function HomePage() {
   const session = await auth();
@@ -13,20 +22,20 @@ export default async function HomePage() {
     getFavorites(email),
     getPlaylists(email),
     getRecentlyAddedSongs(),
-    getAlbums()
+    getAlbums({ limit: 10 })
   ]);
+  const recentSongs = uniqueSongs(recentlyPlayed);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-0 sm:space-y-8">
       <PageHeader
         eyebrow="Private library"
         title="Listen now"
         description="Recently played, saved tracks, playlists, and newly imported songs from your personal collection."
-        action={<PlayButton songs={recentlyAdded} label="Play recent" />}
       />
       <section className="space-y-3">
         <h2 className="text-xl font-black">Recently played</h2>
-        <SongList songs={recentlyPlayed.length ? recentlyPlayed.slice(0, 8) : recentlyAdded.slice(0, 8)} compact />
+        <SongList songs={recentSongs.length ? recentSongs.slice(0, 8) : recentlyAdded.slice(0, 8)} compact showCompactArtworkOnDesktop />
       </section>
       <section className="space-y-3">
         <h2 className="text-xl font-black">Quick access playlists</h2>

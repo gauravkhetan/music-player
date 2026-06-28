@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ListPlus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Playlist } from "@/types/music";
 
 export function PlaylistManager({ initialPlaylists }: { initialPlaylists: Playlist[] }) {
+  const router = useRouter();
   const [playlists, setPlaylists] = useState(initialPlaylists);
   const [name, setName] = useState("");
 
@@ -61,17 +63,30 @@ export function PlaylistManager({ initialPlaylists }: { initialPlaylists: Playli
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {playlists.map((playlist) => (
-          <article key={playlist.id} className="rounded-md bg-surface p-4">
+          <article
+            key={playlist.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => router.push(`/playlists/${playlist.id}`)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                router.push(`/playlists/${playlist.id}`);
+              }
+            }}
+            className="cursor-pointer rounded-md bg-surface p-4 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label={`Open ${playlist.name}`}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="truncate font-bold">{playlist.name}</h2>
                 <p className="mt-1 text-sm text-muted">{playlist.song_count ?? 0} songs</p>
               </div>
               <div className="flex gap-1">
-                <Button size="icon" variant="ghost" onClick={() => renamePlaylist(playlist)} aria-label={`Rename ${playlist.name}`} title="Rename">
+                <Button size="icon" variant="ghost" onClick={(event) => { event.stopPropagation(); void renamePlaylist(playlist); }} onKeyDown={(event) => event.stopPropagation()} aria-label={`Rename ${playlist.name}`} title="Rename">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => deletePlaylist(playlist)} aria-label={`Delete ${playlist.name}`} title="Delete">
+                <Button size="icon" variant="ghost" onClick={(event) => { event.stopPropagation(); void deletePlaylist(playlist); }} onKeyDown={(event) => event.stopPropagation()} aria-label={`Delete ${playlist.name}`} title="Delete">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
